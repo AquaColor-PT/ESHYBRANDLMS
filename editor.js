@@ -41,7 +41,8 @@ function lockEditor() {
   saveBtn.style.display = 'none';
   submitBtn.style.display = 'none';
   resetBtn.style.display = 'none';
-  document.getElementById('tools').style.display = 'none';
+  // Hide only the formatting buttons so zoom stays available when viewing
+  document.getElementById('fmt').style.display = 'none';
   document.getElementById('banner').style.display = 'block';
   setStatus('');
 }
@@ -95,6 +96,9 @@ async function init() {
   }
 
   document.getElementById('loading').style.display = 'none';
+
+  // Start fitted to the screen on phones
+  if (window.matchMedia('(max-width:700px)').matches) fitZoom();
 
   if (sub && sub.status === 'submitted') {
     lockEditor();
@@ -162,6 +166,7 @@ resetBtn.addEventListener('click', async () => {
   setStatus('Reloading original...');
   try {
     await renderOriginal();
+    if (fitMode) fitZoom();
     markDirty();
   } catch (err) {
     setStatus('Could not reload: ' + err.message);
@@ -176,14 +181,52 @@ window.addEventListener('beforeunload', (e) => {
   if (dirty && !locked) { e.preventDefault(); e.returnValue = ''; }
 });
 
-// ---------- Toolbar ----------
-document.querySelectorAll('#tools button').forEach((b) => {
+// ---------- Toolbar (formatting buttons only) ----------
+document.querySelectorAll('#fmt button').forEach((b) => {
   b.addEventListener('mousedown', (e) => {
     e.preventDefault(); // keep the text selection
     document.execCommand(b.dataset.cmd);
     markDirty();
   });
 });
+
+// ---------- Zoom ----------
+// Zoom is applied to #editor itself (not the .docx-wrapper inside it),
+// so the zoom style is never part of editor.innerHTML and never gets saved.
+let zoomLevel = 1;
+let fitMode = false;
+
+function applyZoom(z) {
+  zoomLevel = Math.min(3, Math.max(0.3, z));
+  editor.style.zoom = zoomLevel;
+}
+
+function fitZoom() {
+  fitMode = true;
+  editor.style.zoom = 1; // measure at 100%
+  const page = editor.parentElement;
+  const cs = getComputedStyle(page);
+  const available = page.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+
+  let natural = 0;
+  const wrapper = editor.querySelector('.docx-wrapper');
+  if (wrapper) {
+    const pad = parseFloat(getComputedStyle(wrapper).paddingLeft) || 0;
+    wrapper.querySelectorAll('section').forEach((s) => {
+      natural = Math.max(natural, s.offsetWidth + pad * 2);
+    });
+  }
+  if (!natural) natural = editor.scrollWidth;
+
+  applyZoom(natural > 0 ? Math.min(1, available / natural) : 1);
+}
+
+document.getElementById('zIn').addEventListener('click', () => { fitMode = false; applyZoom(zoomLevel + 0.1); });
+document.getElementById('zOut').addEventListener('click', () => { fitMode = false; applyZoom(zoomLevel - 0.1); });
+document.getElementById('zFit').addEventListener('click', fitZoom);
+
+// Keep "fit" in effect when the phone is rotated or the window resized
+window.addEventListener('resize', () => { if (fitMode) fitZoom(); });
 
 // ---------- Download as Word ----------
 document.getElementById('wordBtn').addEventListener('click', () => {
