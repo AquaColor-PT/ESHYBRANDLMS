@@ -8,14 +8,19 @@ const form = document.getElementById('registerForm');
 const msg = document.getElementById('msg');
 const btn = document.getElementById('submitBtn');
 
+// The confirmation email link opens the login page, using this site's own folder
+// (works on GitHub Pages: https://aquacolor-pt.github.io/ESHYBRANDLMS/login.html)
+const LOGIN_URL = new URL('login.html', window.location.href).href;
+
 function showMsg(text, type) {
   msg.textContent = text;
   msg.className = type;
 }
 
-// If already logged in, go straight to the dashboard
+// If already logged in, go to the login page, which sends learners on
+// (it also asks for their ID number if they have not been verified yet)
 sb.auth.getSession().then(({ data }) => {
-  if (data.session) window.location.href = 'dashboard.html';
+  if (data.session) window.location.href = 'login.html';
 });
 
 form.addEventListener('submit', async (e) => {
@@ -43,7 +48,10 @@ form.addEventListener('submit', async (e) => {
   const { data, error } = await sb.auth.signUp({
     email: email,
     password: password,
-    options: { data: { full_name: fullName } }
+    options: {
+      data: { full_name: fullName },
+      emailRedirectTo: LOGIN_URL
+    }
   });
 
   if (error) {
@@ -52,13 +60,14 @@ form.addEventListener('submit', async (e) => {
   }
 
   if (data.session) {
-    // Email confirmation is turned off: the learner is logged in already
+    // Email confirmation is turned off: the learner is logged in already.
+    // Send them to the login page so they can verify their ID number.
     showMsg('Registration successful! Redirecting...', 'ok');
-    setTimeout(() => (window.location.href = 'dashboard.html'), 1200);
+    setTimeout(() => (window.location.href = 'login.html'), 1200);
   } else {
     // Email confirmation is turned on: the learner must confirm first
-    showMsg('Registration successful! Check your email to confirm your account, then log in.', 'ok');
+    showMsg('Registration successful! Check your email to confirm your account, then log in and enter your ID number.', 'ok');
     form.reset();
     btn.disabled = false;
   }
-});s
+});
