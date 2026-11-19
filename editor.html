@@ -9,32 +9,58 @@
 :root{--navy:#14306b;--blue:#2563eb;--bg:#eef2f9;--tx:#1b2333;--mu:#5b667a;--card:#fff;--bd:#dbe3f0;--ok:#16a34a;--warn:#d97706;--bad:#dc2626}
 @media(prefers-color-scheme:dark){:root{--navy:#a9c3ff;--bg:#0f1420;--tx:#eaeef8;--mu:#9aa6bd;--card:#182030;--bd:#2b3650}}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--tx)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:system-ui,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden}
 a{text-decoration:none;color:inherit}
 .top{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd)}
 .bar{max-width:1100px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--navy)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--navy);min-width:0}
 .brand img{height:34px}
 .brand span.t{font-size:16px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.btn{display:inline-block;padding:8px 14px;border-radius:10px;font-weight:600;font-size:14px;border:2px solid var(--blue);cursor:pointer;background:transparent;color:var(--blue)}
+.btn{display:inline-block;padding:8px 14px;border-radius:10px;font-weight:600;font-size:14px;border:2px solid var(--blue);cursor:pointer;background:transparent;color:var(--blue);touch-action:manipulation}
 .btn.fill{background:var(--blue);color:#fff}
 .btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
 .btn.del{border-color:var(--bad);color:var(--bad)}
 .btn:disabled{opacity:.6;cursor:not-allowed}
 .acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 #status{font-size:13px;color:var(--mu)}
-.tools{max-width:1100px;margin:0 auto;padding:0 20px 10px;display:flex;gap:6px;flex-wrap:wrap}
-.tools button{padding:6px 12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:8px;cursor:pointer;font-size:14px}
+.tools{max-width:1100px;margin:0 auto;padding:0 20px 10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tools button{padding:6px 12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:8px;cursor:pointer;font-size:14px;touch-action:manipulation}
+#fmt{display:flex;gap:6px;flex-wrap:wrap}
+#zoomctl{display:flex;gap:6px;margin-left:auto}
 .page{max-width:1100px;margin:20px auto;padding:0 12px}
 #editor{outline:none;overflow-x:auto;min-height:70vh}
 /* Older saved copies (made before this update) keep the simple page look */
-#editor.legacy{background:#fff;color:#111;padding:40px 44px;border:1px solid var(--bd);border-radius:6px;line-height:1.6}
+#editor.legacy{background:#fff;color:#111;padding:40px 44px;border:1px solid var(--bd);border-radius:6px;line-height:1.6;overflow-wrap:anywhere}
 #editor.legacy table{border-collapse:collapse;margin:10px 0;width:100%}
 #editor.legacy td,#editor.legacy th{border:1px solid #888;padding:6px;vertical-align:top;min-width:40px}
 #editor.legacy img{max-width:100%;height:auto}
 #editor.legacy p{margin:6px 0}
 #loading{text-align:center;padding:80px;color:var(--mu)}
 #banner{display:none;max-width:1100px;margin:14px auto 0;padding:10px 14px;background:rgba(22,163,74,.15);border:1px solid var(--ok);border-radius:10px;font-size:14px}
+
+/* ---------- Phones and small tablets ---------- */
+@media(max-width:700px){
+  /* header scrolls away with the page; only the formatting toolbar stays pinned,
+     so the on-screen keyboard still leaves room to type */
+  .top{position:static;display:contents}
+  .bar{background:var(--card);border-bottom:1px solid var(--bd);padding:8px 10px;gap:6px}
+  .brand img{height:30px}
+  .brand span.t{font-size:14px;max-width:62vw}
+  .acts{width:100%;gap:6px}
+  #status{flex:1 0 100%;order:-1;font-size:12px;min-height:16px}
+  .acts .btn{padding:7px 9px;font-size:12.5px;border-width:1.5px;white-space:nowrap}
+  .tools{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd);
+    padding:6px 10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tools::-webkit-scrollbar{display:none}
+  #fmt,#zoomctl{flex:none;flex-wrap:nowrap}
+  #zoomctl{margin-left:12px;padding-left:12px;border-left:1px solid var(--bd)}
+  .tools button{min-width:40px;min-height:38px;white-space:nowrap}
+  .page{margin:10px auto;padding:0 4px}
+  #editor.legacy{padding:16px 14px}
+  #banner{margin:10px 8px 0;font-size:13px}
+  #loading{padding:50px 16px}
+}
 </style>
 </head>
 <body>
@@ -55,13 +81,20 @@ a{text-decoration:none;color:inherit}
     </div>
   </div>
   <div class="tools" id="tools">
-    <button data-cmd="bold"><b>B</b></button>
-    <button data-cmd="italic"><i>I</i></button>
-    <button data-cmd="underline"><u>U</u></button>
-    <button data-cmd="insertUnorderedList">&bull; List</button>
-    <button data-cmd="insertOrderedList">1. List</button>
-    <button data-cmd="undo">Undo</button>
-    <button data-cmd="redo">Redo</button>
+    <span id="fmt">
+      <button data-cmd="bold"><b>B</b></button>
+      <button data-cmd="italic"><i>I</i></button>
+      <button data-cmd="underline"><u>U</u></button>
+      <button data-cmd="insertUnorderedList">&bull; List</button>
+      <button data-cmd="insertOrderedList">1. List</button>
+      <button data-cmd="undo">Undo</button>
+      <button data-cmd="redo">Redo</button>
+    </span>
+    <span id="zoomctl">
+      <button id="zOut" aria-label="Zoom out">&minus;</button>
+      <button id="zFit" aria-label="Fit page to screen">Fit</button>
+      <button id="zIn" aria-label="Zoom in">+</button>
+    </span>
   </div>
 </div>
 
