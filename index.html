@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EshyBrand LMS</title>
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+:root{--navy:#14306b;--blue:#2563eb;--cyan:#3fd0ff;--bg:#f4f7fc;--tx:#1b2333;--mu:#5b667a;--card:#fff;--bd:#dbe3f0}
+@media(prefers-color-scheme:dark){:root{--navy:#a9c3ff;--bg:#0f1420;--tx:#eaeef8;--mu:#9aa6bd;--card:#182030;--bd:#2b3650}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--tx);line-height:1.6}
+a{text-decoration:none;color:inherit}
+header{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd)}
+.nav{max-width:1100px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;color:var(--navy)}
+.brand img{height:42px}
+.links{display:flex;align-items:center;gap:10px}
+.btn{display:inline-block;padding:10px 20px;border-radius:10px;font-weight:600;font-size:15px;border:2px solid var(--blue);cursor:pointer;background:transparent;color:var(--blue)}
+.btn.fill{background:var(--blue);color:#fff}
+.btn:hover{opacity:.88}
+.hero{background:linear-gradient(135deg,#14306b,#2563eb 60%,#3fd0ff);color:#fff;padding:70px 20px;text-align:center}
+.hero img{height:110px;background:#fff;border-radius:50%;padding:10px;margin-bottom:16px}
+.hero h1{font-size:clamp(28px,5vw,46px);margin-bottom:12px}
+.hero p{max-width:620px;margin:0 auto 26px;font-size:18px;opacity:.95}
+.hero .btn{border-color:#fff;color:#fff;margin:5px}
+.hero .btn.fill{background:#fff;color:#14306b}
+section{max-width:1100px;margin:0 auto;padding:54px 20px}
+h2{text-align:center;font-size:28px;color:var(--navy);margin-bottom:30px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:24px}
+.card .n{width:38px;height:38px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;margin-bottom:12px}
+.card h3{margin-bottom:6px;font-size:18px}
+.card p{color:var(--mu);font-size:15px}
+footer{text-align:center;padding:26px 20px;color:var(--mu);font-size:14px;border-top:1px solid var(--bd)}
+@media(max-width:560px){.brand span{font-size:17px}.btn{padding:8px 13px;font-size:14px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a class="brand" href="index.html"><img src="logo.png" alt="EshyBrand logo"><span>EshyBrand LMS</span></a>
+    <nav class="links" id="navLinks">
+      <a class="btn" href="login.html">Login</a>
+      <a class="btn fill" href="register.html">Register</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <img src="logo.png" alt="EshyBrand logo">
+  <h1>Welcome to EshyBrand LMS</h1>
+  <p>Download your learner workbooks and summative tests, complete them online, and submit your work in one place.</p>
+  <div id="heroButtons">
+    <a class="btn fill" href="register.html">Create your profile</a>
+    <a class="btn" href="login.html">Learner login</a>
+  </div>
+</div>
+
+<section>
+  <h2>How it works</h2>
+  <div class="grid">
+    <div class="card"><div class="n">1</div><h3>Register</h3><p>Create your learner profile with your name so your facilitator can recognise your submissions.</p></div>
+    <div class="card"><div class="n">2</div><h3>Open your documents</h3><p>Find the learner workbook and summative test (Word documents) uploaded for your programme.</p></div>
+    <div class="card"><div class="n">3</div><h3>Edit and save</h3><p>Complete your answers on the website and save your progress as you go.</p></div>
+    <div class="card"><div class="n">4</div><h3>Submit</h3><p>Submit when you are done. Your facilitator will see who has submitted.</p></div>
+  </div>
+</section>
+
+<footer>&copy; <span id="year"></span> EshyBrand LMS. All rights reserved. | <a href="admin-login.html">Admin</a></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="index.js"></script>
+</body>
+</html>

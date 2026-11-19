@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Dashboard - EshyBrand LMS</title>
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+:root{--navy:#14306b;--blue:#2563eb;--bg:#f4f7fc;--tx:#1b2333;--mu:#5b667a;--card:#fff;--bd:#dbe3f0;--ok:#16a34a;--warn:#d97706}
+@media(prefers-color-scheme:dark){:root{--navy:#a9c3ff;--bg:#0f1420;--tx:#eaeef8;--mu:#9aa6bd;--card:#182030;--bd:#2b3650}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--tx);line-height:1.5}
+a{text-decoration:none;color:inherit}
+header{background:var(--card);border-bottom:1px solid var(--bd)}
+.nav{max-width:1000px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px;color:var(--navy)}
+.brand img{height:40px}
+.links{display:flex;gap:8px}
+.btn{display:inline-block;padding:9px 16px;border-radius:10px;font-weight:600;font-size:14px;border:2px solid var(--blue);cursor:pointer;background:transparent;color:var(--blue)}
+.btn.fill{background:var(--blue);color:#fff}
+main{max-width:1000px;margin:0 auto;padding:30px 20px}
+.welcome h1{font-size:26px;color:var(--navy)}
+.welcome p{color:var(--mu);margin-top:4px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;text-align:center}
+.stat b{display:block;font-size:26px;color:var(--blue)}
+.stat span{font-size:13px;color:var(--mu)}
+h2{font-size:20px;margin:24px 0 12px;color:var(--navy)}
+.list{display:grid;gap:12px}
+.doc{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.doc h3{font-size:17px}
+.doc small{color:var(--mu)}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;margin-left:8px;color:#fff;background:var(--mu)}
+.badge.progress{background:var(--warn)}.badge.done{background:var(--ok)}
+.empty{background:var(--card);border:1px dashed var(--bd);border-radius:12px;padding:30px;text-align:center;color:var(--mu)}
+#loading{text-align:center;padding:60px;color:var(--mu)}
+@media(max-width:520px){.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <a class="brand" href="index.html"><img src="logo.png" alt="EshyBrand logo"><span>EshyBrand LMS</span></a>
+    <div class="links">
+      <a class="btn" id="adminLink" href="admin.html" style="display:none">Admin panel</a>
+      <button class="btn fill" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="loading">Loading your dashboard...</div>
+
+  <div id="content" style="display:none">
+    <div class="welcome">
+      <h1>Welcome, <span id="userName"></span></h1>
+      <p>Open a document, complete it online, save your work and submit when you are done.</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b id="cNot">0</b><span>Not started</span></div>
+      <div class="stat"><b id="cProg">0</b><span>In progress</span></div>
+      <div class="stat"><b id="cDone">0</b><span>Submitted</span></div>
+    </div>
+
+    <h2>My documents</h2>
+    <div class="list" id="docList"></div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login - EshyBrand LMS</title>
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+:root{--navy:#14306b;--blue:#2563eb;--bg:#f4f7fc;--tx:#1b2333;--mu:#5b667a;--card:#fff;--bd:#dbe3f0;--bad:#dc2626;--ok:#16a34a}
+@media(prefers-color-scheme:dark){:root{--navy:#a9c3ff;--bg:#0f1420;--tx:#eaeef8;--mu:#9aa6bd;--card:#182030;--bd:#2b3650}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{width:100%;max-width:420px;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:30px}
+.logo{text-align:center;margin-bottom:18px}
+.logo img{height:70px}
+.logo h1{font-size:22px;color:var(--navy);margin-top:6px}
+.logo p{color:var(--mu);font-size:14px}
+label{display:block;font-size:14px;font-weight:600;margin:14px 0 5px}
+input{width:100%;padding:12px;border:1px solid var(--bd);border-radius:10px;font-size:15px;background:var(--bg);color:var(--tx)}
+input:focus{outline:2px solid var(--blue);border-color:var(--blue)}
+button{width:100%;margin-top:20px;padding:13px;border:0;border-radius:10px;background:var(--blue);color:#fff;font-size:16px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+#msg,#vmsg{margin-top:14px;font-size:14px;text-align:center;min-height:20px}
+#msg.err,#vmsg.err{color:var(--bad)}#msg.ok,#vmsg.ok{color:var(--ok)}
+.alt{text-align:center;margin-top:16px;font-size:14px;color:var(--mu)}
+.alt a{color:var(--blue);font-weight:600;text-decoration:none;cursor:pointer}
+.note{font-size:14px;color:var(--mu);text-align:center;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <div class="logo">
+    <a href="index.html"><img src="logo.png" alt="EshyBrand logo"></a>
+    <h1 id="title">Welcome back</h1>
+    <p id="subtitle">Login to EshyBrand LMS</p>
+  </div>
+
+  <form id="loginForm">
+    <label for="email">Email address</label>
+    <input type="email" id="email" placeholder="you@example.com" required>
+
+    <label for="password">Password</label>
+    <input type="password" id="password" required>
+
+    <button type="submit" id="submitBtn">Login</button>
+    <div id="msg"></div>
+  </form>
+
+  <!-- Shown after login if the learner's ID has not been verified yet -->
+  <form id="verifyForm" style="display:none">
+    <p class="note">Please enter your ID number so we can confirm you are enrolled in the programme.</p>
+
+    <label for="idNumber">ID number</label>
+    <input type="text" id="idNumber" inputmode="numeric" autocomplete="off" placeholder="Your ID number" required>
+
+    <button type="submit" id="verifyBtn">Verify my ID</button>
+    <div id="vmsg"></div>
+    <p class="alt"><a id="cancelVerify">Log out</a></p>
+  </form>
+
+  <div id="extras">
+    <p class="alt"><a id="forgotLink">Forgot your password?</a></p>
+    <p class="alt">New learner? <a href="register.html">Register</a></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="login.js"></script>
+</body>
+</html>
