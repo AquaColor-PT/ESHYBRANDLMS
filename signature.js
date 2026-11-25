@@ -44,6 +44,31 @@
   });
   ['pointerup', 'pointercancel'].forEach((n) => pad.addEventListener(n, () => { drawing = false; }));
 
+  // Use a picture of a signature: shrink it to fit inside the signature box
+  const fileInput = document.getElementById('signFile');
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    fileInput.value = ''; // lets the same picture be chosen again
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const pic = new Image();
+    pic.onload = () => {
+      const scale = Math.min(pad.width / pic.width, pad.height / pic.height);
+      const w = pic.width * scale;
+      const h = pic.height * scale;
+      clearPad();
+      ctx.drawImage(pic, (pad.width - w) / 2, (pad.height - h) / 2, w, h);
+      hasInk = true;
+      note.textContent = '';
+      URL.revokeObjectURL(url);
+    };
+    pic.onerror = () => {
+      note.textContent = 'That picture could not be opened. Please use a JPG or PNG.';
+      URL.revokeObjectURL(url);
+    };
+    pic.src = url;
+  });
+
   openBtn.addEventListener('click', () => {
     if (locked) return;
     if (!place || !editor.contains(place.startContainer)) {
@@ -58,7 +83,7 @@
   document.getElementById('signCancel').addEventListener('click', () => { box.style.display = 'none'; });
 
   document.getElementById('signAdd').addEventListener('click', () => {
-    if (!hasInk) { note.textContent = 'Please draw your signature first.'; return; }
+    if (!hasInk) { note.textContent = 'Please draw or choose your signature first.'; return; }
     const img = document.createElement('img');
     img.src = pad.toDataURL('image/png');
     img.alt = 'Signature';
