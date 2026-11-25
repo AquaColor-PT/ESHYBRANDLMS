@@ -98,7 +98,7 @@ a{text-decoration:none;color:inherit}
       <button data-cmd="undo">Undo</button>
       <button data-cmd="redo">Redo</button>
     </span>
-    <button id="signBtn">&#9997; Sign</button>
+    <button id="signBtn">&#9997; Sign v3</button>
     <span id="zoomctl">
       <button id="zOut" aria-label="Zoom out">&minus;</button>
       <button id="zFit" aria-label="Fit page to screen">Fit</button>
@@ -131,6 +131,123 @@ a{text-decoration:none;color:inherit}
 <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.3/dist/docx-preview.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 <script src="editor.js"></script>
-<script src="signature.js"></script>
+<script>
+// EshyBrand LMS - draw a signature and place it in the document
+// Runs after editor.js (uses its editor, locked and markDirty).
+(() => {
+  const openBtn = document.getElementById('signBtn');
+  const box = document.getElementById('signBox');
+  const pad = document.getElementById('signPad');
+  const note = document.getElementById('signNote');
+  const ctx = pad.getContext('2d');
+  let place = null;   // where the cursor was in the document
+  let drawing = false;
+  let hasInk = false;
+
+  // Remember the last cursor position inside the document
+  document.addEventListener('selectionchange', () => {
+    const sel = window.getSelection();
+    if (sel.rangeCount && editor.contains(sel.anchorNode) && sel.anchorNode !== editor) {
+      place = sel.getRangeAt(0).cloneRange();
+    }
+  });
+
+  function clearPad() {
+    ctx.clearRect(0, 0, pad.width, pad.height);
+    hasInk = false;
+  }
+  function point(e) {
+    const r = pad.getBoundingClientRect();
+    return [(e.clientX - r.left) * pad.width / r.width, (e.clientY - r.top) * pad.height / r.height];
+  }
+
+  pad.addEventListener('pointerdown', (e) => {
+    drawing = true;
+    pad.setPointerCapture(e.pointerId);
+    ctx.lineWidth = 3;
+    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#10206b';
+    ctx.beginPath();
+    ctx.moveTo(...point(e));
+  });
+  pad.addEventListener('pointermove', (e) => {
+    if (!drawing) return;
+    ctx.lineTo(...point(e));
+    ctx.stroke();
+    hasInk = true;
+  });
+  ['pointerup', 'pointercancel'].forEach((n) => pad.addEventListener(n, () => { drawing = false; }));
+
+  // Use a picture of a signature: shrink it to fit inside the signature box
+  const fileInput = document.getElementById('signFile');
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    fileInput.value = ''; // lets the same picture be chosen again
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const pic = new Image();
+    pic.onload = () => {
+      const scale = Math.min(pad.width / pic.width, pad.height / pic.height);
+      const w = pic.width * scale;
+      const h = pic.height * scale;
+      clearPad();
+      ctx.drawImage(pic, (pad.width - w) / 2, (pad.height - h) / 2, w, h);
+      hasInk = true;
+      note.textContent = '';
+      URL.revokeObjectURL(url);
+    };
+    pic.onerror = () => {
+      note.textContent = 'That picture could not be opened. Please use a JPG or PNG.';
+      URL.revokeObjectURL(url);
+    };
+    pic.src = url;
+  });
+
+  openBtn.addEventListener('click', () => {
+    if (locked) return;
+    clearPad();
+    note.textContent = '';
+    box.style.display = 'flex';
+  });
+
+  document.getElementById('signClear').addEventListener('click', clearPad);
+  document.getElementById('signCancel').addEventListener('click', () => { box.style.display = 'none'; });
+
+  document.getElementById('signAdd').addEventListener('click', () => {
+    if (!hasInk) { note.textContent = 'Please draw or choose your signature first.'; return; }
+    const img = document.createElement('img');
+    img.src = pad.toDataURL('image/png');
+    img.alt = 'Signature';
+    img.width = 150;
+    img.height = 50;
+    img.style.cssText = 'width:150px;height:50px;vertical-align:bottom';
+    box.style.display = 'none';
+    if (place && editor.contains(place.startContainer)) return insert(img);
+
+    const hint = document.createElement('div');
+    hint.textContent = 'Now tap the line where your signature must go';
+    hint.style.cssText = 'position:fixed;left:12px;right:12px;bottom:50px;z-index:25;background:#111;color:#fff;padding:12px;border-radius:8px;text-align:center';
+    document.body.appendChild(hint);
+    editor.addEventListener('click', (e) => {
+      const target = e.target.closest('p, td, li, div, section') || editor;
+      if (!place || !target.contains(place.startContainer)) {
+        place = document.createRange();
+        place.selectNodeContents(target);
+        place.collapse(false);
+      }
+      hint.remove();
+      insert(img);
+    }, { once: true });
+  });
+
+  function insert(img) {
+    place.collapse(false);
+    place.insertNode(img);
+    place.setStartAfter(img);
+    place.collapse(true);
+    markDirty();
+  }
+})();
+</script>
 </body>
 </html>
