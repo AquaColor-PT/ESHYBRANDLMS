@@ -39,6 +39,14 @@ a{text-decoration:none;color:inherit}
 #loading{text-align:center;padding:80px;color:var(--mu)}
 #banner{display:none;max-width:1100px;margin:14px auto 0;padding:10px 14px;background:rgba(22,163,74,.15);border:1px solid var(--ok);border-radius:10px;font-size:14px}
 
+/* ---------- Signature ---------- */
+#fmt[style*="none"] + #signBtn{display:none}
+#signBtn{flex:none}
+#signBox{display:none;position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:12px}
+#signBox .card{background:var(--card);border-radius:14px;padding:16px;width:100%;max-width:520px}
+#signPad{display:block;width:100%;aspect-ratio:3/1;background:#fff;border:2px dashed #888;border-radius:8px;margin:10px 0;touch-action:none;cursor:crosshair}
+#signNote{color:var(--bad);font-size:14px;min-height:20px}
+
 /* ---------- Phones and small tablets ---------- */
 @media(max-width:700px){
   /* header scrolls away with the page; only the formatting toolbar stays pinned,
@@ -90,11 +98,25 @@ a{text-decoration:none;color:inherit}
       <button data-cmd="undo">Undo</button>
       <button data-cmd="redo">Redo</button>
     </span>
+    <button id="signBtn">&#9997; Sign</button>
     <span id="zoomctl">
       <button id="zOut" aria-label="Zoom out">&minus;</button>
       <button id="zFit" aria-label="Fit page to screen">Fit</button>
       <button id="zIn" aria-label="Zoom in">+</button>
     </span>
+  </div>
+</div>
+
+<div id="signBox">
+  <div class="card">
+    <b>Draw your signature</b>
+    <canvas id="signPad" width="600" height="200"></canvas>
+    <div id="signNote"></div>
+    <div class="acts">
+      <button class="btn" id="signClear">Clear</button>
+      <button class="btn" id="signCancel">Cancel</button>
+      <button class="btn fill" id="signAdd">Add signature</button>
+    </div>
   </div>
 </div>
 
@@ -107,5 +129,6 @@ a{text-decoration:none;color:inherit}
 <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.3/dist/docx-preview.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 <script src="editor.js"></script>
+<script src="signature.js"></script>
 </body>
 </html>
