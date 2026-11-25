@@ -57,6 +57,66 @@ async function renderOriginal() {
   await docx.renderAsync(await blob.arrayBuffer(), editor, null, DOCX_OPTIONS);
 }
 
+// ---------- PDF documents (read only) ----------
+async function showPdf() {
+  const { data, error } = await sb.storage.from('documents').createSignedUrl(docRow.file_path, 3600);
+  if (error) throw error;
+
+  locked = true; // nothing to save for a PDF
+  ['saveBtn', 'submitBtn', 'resetBtn', 'wordBtn', 'tools'].forEach((id) => {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  const open = document.createElement('a');
+  open.className = 'btn fill';
+  open.href = data.signedUrl;
+  open.target = '_blank';
+  open.rel = 'noopener';
+  open.textContent = 'Open / download PDF';
+  open.style.marginBottom = '10px';
+
+  const frame = document.createElement('iframe');
+  frame.src = data.signedUrl;
+  frame.title = docRow.title;
+  frame.style.cssText = 'width:100%;height:80vh;border:0;background:#fff';
+
+  editor.contentEditable = 'false';
+  editor.replaceChildren(open, frame);
+  editor.style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+}
+
+// ---------- Cover page background ----------
+// docx-preview cannot draw grouped pictures (the full-page cover design), so
+// cover.jpg (a flat copy of that design) is placed behind the first page.
+async function addCover() {
+  const page = editor.querySelector('section.docx');
+  if (!page || page.style.backgroundImage) return;
+  try {
+    const original = await sb.storage.from('documents').download(docRow.file_path);
+    if (original.error) return;
+    const zip = await JSZip.loadAsync(await original.data.arrayBuffer());
+    const xml = await zip.file('word/document.xml').async('string');
+    const start = xml.slice(0, 30000);
+    if (!start.includes('<wpg:wgp') || !start.includes('behindDoc="1"')) return;
+
+    const res = await fetch('cover.jpg');
+    if (!res.ok) return;
+    const blob = await res.blob();
+    const url = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+    page.style.backgroundImage = 'url("' + url + '")';
+    page.style.backgroundRepeat = 'no-repeat';
+    page.style.backgroundPosition = 'top center';
+    page.style.backgroundSize = '100% auto';
+  } catch (err) {
+    console.warn('Cover not added:', err);
+  }
+}
+
 // Open the learner's previously saved copy
 function loadSaved(html) {
   editor.innerHTML = DOMPurify.sanitize(html, { ADD_TAGS: ['style'], FORCE_BODY: true });
@@ -79,6 +139,15 @@ async function init() {
   document.getElementById('docTitle').textContent = d.title;
   document.title = d.title + ' - EshyBrand LMS';
 
+  if (/\.pdf$/i.test(d.file_path)) {
+    try {
+      await showPdf();
+    } catch (err) {
+      document.getElementById('loading').textContent = 'Could not open the document: ' + err.message;
+    }
+    return;
+  }
+
   const { data: sub } = await sb.from('submissions').select('*')
     .eq('user_id', user.id).eq('document_id', docId).maybeSingle();
 
@@ -90,6 +159,7 @@ async function init() {
     } else {
       await renderOriginal();
     }
+    await addCover();
   } catch (err) {
     document.getElementById('loading').textContent = 'Could not open the document: ' + err.message;
     return;
@@ -166,6 +236,7 @@ resetBtn.addEventListener('click', async () => {
   setStatus('Reloading original...');
   try {
     await renderOriginal();
+    await addCover();
     if (fitMode) fitZoom();
     markDirty();
   } catch (err) {
@@ -229,18 +300,57 @@ document.getElementById('zFit').addEventListener('click', fitZoom);
 window.addEventListener('resize', () => { if (fitMode) fitZoom(); });
 
 // ---------- Download as Word ----------
-document.getElementById('wordBtn').addEventListener('click', () => {
+// Word does not show pictures embedded as "data:" links in an HTML .doc file,
+// so each picture is packed into the file as a separate part (MHTML).
+function toBase64(text) {
+  let bin = '';
+  new TextEncoder().encode(text).forEach((b) => { bin += String.fromCharCode(b); });
+  return btoa(bin);
+}
+const wrap76 = (s) => s.replace(/.{76}/g, '$&\r\n');
+
+function buildWordFile(title) {
+  const copy = editor.cloneNode(true);
+  const shown = editor.querySelectorAll('img');
+  const boundary = '----=_EshyBrandPart';
+  const parts = [];
+
+  copy.querySelectorAll('img').forEach((img, i) => {
+    // Give Word the size the picture has on screen
+    if (shown[i].offsetWidth) {
+      img.setAttribute('width', shown[i].offsetWidth);
+      img.setAttribute('height', shown[i].offsetHeight);
+      img.style.width = shown[i].offsetWidth + 'px';
+      img.style.height = shown[i].offsetHeight + 'px';
+    }
+    const m = /^data:([^;,]*);base64,(.*)$/s.exec(img.getAttribute('src') || '');
+    if (!m) return;
+    const location = 'file:///C:/eshybrand/image' + i;
+    img.setAttribute('src', location);
+    parts.push('--' + boundary + '\r\nContent-Location: ' + location +
+      '\r\nContent-Type: ' + (m[1] || 'image/png') +
+      '\r\nContent-Transfer-Encoding: base64\r\n\r\n' + wrap76(m[2]) + '\r\n');
+  });
+
   const html =
     '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
     'xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
-    '<head><meta charset="utf-8"><title>' + docRow.title.replace(/</g, '') + '</title></head><body>' +
-    editor.innerHTML + '</body></html>';
-  const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+    '<head><meta charset="utf-8"><title>' + title.replace(/[<>&]/g, '') + '</title></head><body>' +
+    copy.innerHTML + '</body></html>';
+
+  return 'MIME-Version: 1.0\r\nContent-Type: multipart/related; boundary="' + boundary + '"\r\n\r\n' +
+    '--' + boundary + '\r\nContent-Location: file:///C:/eshybrand/document.htm' +
+    '\r\nContent-Type: text/html; charset="utf-8"\r\nContent-Transfer-Encoding: base64\r\n\r\n' +
+    wrap76(toBase64(html)) + '\r\n' + parts.join('') + '--' + boundary + '--\r\n';
+}
+
+document.getElementById('wordBtn').addEventListener('click', () => {
+  const blob = new Blob([buildWordFile(docRow.title)], { type: 'application/msword' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = docRow.title.replace(/[^a-zA-Z0-9 _-]/g, '') + '.doc';
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 });
 
 init();
