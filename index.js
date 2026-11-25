@@ -1,35 +1,237 @@
-// EshyBrand LMS - homepage script
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor - EshyBrand LMS</title>
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+:root{--navy:#14306b;--blue:#2563eb;--bg:#eef2f9;--tx:#1b2333;--mu:#5b667a;--card:#fff;--bd:#dbe3f0;--ok:#16a34a;--warn:#d97706;--bad:#dc2626}
+@media(prefers-color-scheme:dark){:root{--navy:#a9c3ff;--bg:#0f1420;--tx:#eaeef8;--mu:#9aa6bd;--card:#182030;--bd:#2b3650}}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-family:system-ui,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+.top{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd)}
+.bar{max-width:1100px;margin:0 auto;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--navy);min-width:0}
+.brand img{height:34px}
+.brand span.t{font-size:16px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{display:inline-block;padding:8px 14px;border-radius:10px;font-weight:600;font-size:14px;border:2px solid var(--blue);cursor:pointer;background:transparent;color:var(--blue);touch-action:manipulation}
+.btn.fill{background:var(--blue);color:#fff}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.btn.del{border-color:var(--bad);color:var(--bad)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#status{font-size:13px;color:var(--mu)}
+.tools{max-width:1100px;margin:0 auto;padding:0 20px 10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.tools button{padding:6px 12px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:8px;cursor:pointer;font-size:14px;touch-action:manipulation}
+#fmt{display:flex;gap:6px;flex-wrap:wrap}
+#zoomctl{display:flex;gap:6px;margin-left:auto}
+.page{max-width:1100px;margin:20px auto;padding:0 12px}
+#editor{outline:none;overflow-x:auto;min-height:70vh}
+/* Older saved copies (made before this update) keep the simple page look */
+#editor.legacy{background:#fff;color:#111;padding:40px 44px;border:1px solid var(--bd);border-radius:6px;line-height:1.6;overflow-wrap:anywhere}
+#editor.legacy table{border-collapse:collapse;margin:10px 0;width:100%}
+#editor.legacy td,#editor.legacy th{border:1px solid #888;padding:6px;vertical-align:top;min-width:40px}
+#editor.legacy img{max-width:100%;height:auto}
+#editor.legacy p{margin:6px 0}
+#loading{text-align:center;padding:80px;color:var(--mu)}
+#banner{display:none;max-width:1100px;margin:14px auto 0;padding:10px 14px;background:rgba(22,163,74,.15);border:1px solid var(--ok);border-radius:10px;font-size:14px}
 
-const SUPABASE_URL = 'https://pjytyuhpubzuxbftuyqz.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_jgggDCLJA5EjSkhjnJ7hBQ_rr5nolsm';
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+/* ---------- Signature ---------- */
+#fmt[style*="none"] + #signBtn{display:none}
+#signBtn{flex:none}
+#signBox{display:none;position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:12px}
+#signBox .card{background:var(--card);border-radius:14px;padding:16px;width:100%;max-width:520px}
+#signPad{display:block;width:100%;aspect-ratio:3/1;background:#fff;border:2px dashed #888;border-radius:8px;margin:10px 0;touch-action:none;cursor:crosshair}
+#signNote{color:var(--bad);font-size:14px;min-height:20px}
 
-document.getElementById('year').textContent = new Date().getFullYear();
-
-// If logged in, show a Dashboard button (admin or learner) and Logout
-async function updateNav() {
-  try {
-    const { data } = await sb.auth.getSession();
-    if (!data.session) return;
-
-    const { data: profile } = await sb.from('profiles').select('role').eq('id', data.session.user.id).single();
-    const isAdmin = profile && profile.role === 'admin';
-    const url = isAdmin ? 'admin.html' : 'dashboard.html';
-
-    document.getElementById('navLinks').innerHTML =
-      '<a class="btn fill" href="' + url + '">' + (isAdmin ? 'Admin Dashboard' : 'My Dashboard') + '</a>' +
-      '<button class="btn" id="logoutBtn">Logout</button>';
-
-    document.getElementById('heroButtons').innerHTML =
-      '<a class="btn fill" href="' + url + '">Go to my dashboard</a>';
-
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      await sb.auth.signOut();
-      window.location.reload();
-    });
-  } catch (err) {
-    console.error('Could not check login status:', err);
-  }
+/* ---------- Phones and small tablets ---------- */
+@media(max-width:700px){
+  /* header scrolls away with the page; only the formatting toolbar stays pinned,
+     so the on-screen keyboard still leaves room to type */
+  .top{position:static;display:contents}
+  .bar{background:var(--card);border-bottom:1px solid var(--bd);padding:8px 10px;gap:6px}
+  .brand img{height:30px}
+  .brand span.t{font-size:14px;max-width:62vw}
+  .acts{width:100%;gap:6px}
+  #status{flex:1 0 100%;order:-1;font-size:12px;min-height:16px}
+  .acts .btn{padding:7px 9px;font-size:12.5px;border-width:1.5px;white-space:nowrap}
+  .tools{position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--bd);
+    padding:6px 10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tools::-webkit-scrollbar{display:none}
+  #fmt,#zoomctl{flex:none;flex-wrap:nowrap}
+  #zoomctl{margin-left:12px;padding-left:12px;border-left:1px solid var(--bd)}
+  .tools button{min-width:40px;min-height:38px;white-space:nowrap}
+  .page{margin:10px auto;padding:0 4px}
+  #editor.legacy{padding:16px 14px}
+  #banner{margin:10px 8px 0;font-size:13px}
+  #loading{padding:50px 16px}
 }
+</style>
+</head>
+<body>
 
-updateNav();
+<div class="top">
+  <div class="bar">
+    <div class="brand">
+      <a href="dashboard.html"><img src="logo.png" alt="EshyBrand logo"></a>
+      <span class="t" id="docTitle">Loading...</span>
+    </div>
+    <div class="acts">
+      <span id="status"></span>
+      <a class="btn" href="dashboard.html">Back</a>
+      <button class="btn del" id="resetBtn">Start over</button>
+      <button class="btn" id="wordBtn">Download Word</button>
+      <button class="btn fill" id="saveBtn">Save</button>
+      <button class="btn ok" id="submitBtn">Submit</button>
+    </div>
+  </div>
+  <div class="tools" id="tools">
+    <span id="fmt">
+      <button data-cmd="bold"><b>B</b></button>
+      <button data-cmd="italic"><i>I</i></button>
+      <button data-cmd="underline"><u>U</u></button>
+      <button data-cmd="insertUnorderedList">&bull; List</button>
+      <button data-cmd="insertOrderedList">1. List</button>
+      <button data-cmd="undo">Undo</button>
+      <button data-cmd="redo">Redo</button>
+    </span>
+    <button id="signBtn">&#9997; Sign</button>
+    <span id="zoomctl">
+      <button id="zOut" aria-label="Zoom out">&minus;</button>
+      <button id="zFit" aria-label="Fit page to screen">Fit</button>
+      <button id="zIn" aria-label="Zoom in">+</button>
+    </span>
+  </div>
+</div>
+
+<div id="signBox">
+  <div class="card">
+    <b>Draw your signature, or use a picture of it</b>
+    <canvas id="signPad" width="600" height="200"></canvas>
+    <label class="btn" for="signFile">&#128247; Use a picture</label>
+    <input type="file" id="signFile" accept="image/*" hidden>
+    <div id="signNote"></div>
+    <div class="acts">
+      <button class="btn" id="signClear">Clear</button>
+      <button class="btn" id="signCancel">Cancel</button>
+      <button class="btn fill" id="signAdd">Add signature</button>
+    </div>
+  </div>
+</div>
+
+<div id="banner">This document has been submitted. You can view it but not change it.</div>
+<div id="loading">Opening your document...</div>
+<div class="page"><div id="editor" contenteditable="true" style="display:none"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.3/dist/docx-preview.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script src="editor.js"></script>
+<script>
+// EshyBrand LMS - draw a signature and place it in the document
+// Runs after editor.js (uses its editor, locked and markDirty).
+(() => {
+  const openBtn = document.getElementById('signBtn');
+  const box = document.getElementById('signBox');
+  const pad = document.getElementById('signPad');
+  const note = document.getElementById('signNote');
+  const ctx = pad.getContext('2d');
+  let place = null;   // where the cursor was in the document
+  let drawing = false;
+  let hasInk = false;
+
+  // Remember the last cursor position inside the document
+  document.addEventListener('selectionchange', () => {
+    const sel = window.getSelection();
+    if (sel.rangeCount && editor.contains(sel.anchorNode) && sel.anchorNode !== editor) {
+      place = sel.getRangeAt(0).cloneRange();
+    }
+  });
+
+  function clearPad() {
+    ctx.clearRect(0, 0, pad.width, pad.height);
+    hasInk = false;
+  }
+  function point(e) {
+    const r = pad.getBoundingClientRect();
+    return [(e.clientX - r.left) * pad.width / r.width, (e.clientY - r.top) * pad.height / r.height];
+  }
+
+  pad.addEventListener('pointerdown', (e) => {
+    drawing = true;
+    pad.setPointerCapture(e.pointerId);
+    ctx.lineWidth = 3;
+    ctx.lineCap = ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#10206b';
+    ctx.beginPath();
+    ctx.moveTo(...point(e));
+  });
+  pad.addEventListener('pointermove', (e) => {
+    if (!drawing) return;
+    ctx.lineTo(...point(e));
+    ctx.stroke();
+    hasInk = true;
+  });
+  ['pointerup', 'pointercancel'].forEach((n) => pad.addEventListener(n, () => { drawing = false; }));
+
+  // Use a picture of a signature: shrink it to fit inside the signature box
+  const fileInput = document.getElementById('signFile');
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    fileInput.value = ''; // lets the same picture be chosen again
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const pic = new Image();
+    pic.onload = () => {
+      const scale = Math.min(pad.width / pic.width, pad.height / pic.height);
+      const w = pic.width * scale;
+      const h = pic.height * scale;
+      clearPad();
+      ctx.drawImage(pic, (pad.width - w) / 2, (pad.height - h) / 2, w, h);
+      hasInk = true;
+      note.textContent = '';
+      URL.revokeObjectURL(url);
+    };
+    pic.onerror = () => {
+      note.textContent = 'That picture could not be opened. Please use a JPG or PNG.';
+      URL.revokeObjectURL(url);
+    };
+    pic.src = url;
+  });
+
+  openBtn.addEventListener('click', () => {
+    if (locked) return;
+    if (!place || !editor.contains(place.startContainer)) {
+      return alert('First tap on the signature line in the document, then press Sign.');
+    }
+    clearPad();
+    note.textContent = '';
+    box.style.display = 'flex';
+  });
+
+  document.getElementById('signClear').addEventListener('click', clearPad);
+  document.getElementById('signCancel').addEventListener('click', () => { box.style.display = 'none'; });
+
+  document.getElementById('signAdd').addEventListener('click', () => {
+    if (!hasInk) { note.textContent = 'Please draw or choose your signature first.'; return; }
+    const img = document.createElement('img');
+    img.src = pad.toDataURL('image/png');
+    img.alt = 'Signature';
+    img.width = 150;
+    img.height = 50;
+    img.style.cssText = 'width:150px;height:50px;vertical-align:bottom';
+    place.collapse(false);
+    place.insertNode(img);
+    place.setStartAfter(img);
+    place.collapse(true);
+    box.style.display = 'none';
+    markDirty();
+  });
+})();
+</script>
+</body>
+</html>
