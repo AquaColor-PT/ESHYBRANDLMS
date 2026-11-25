@@ -98,7 +98,7 @@ a{text-decoration:none;color:inherit}
       <button data-cmd="undo">Undo</button>
       <button data-cmd="redo">Redo</button>
     </span>
-    <button id="signBtn">&#9997; Sign v3</button>
+    <button id="signBtn">&#9997; Sign v4</button>
     <span id="zoomctl">
       <button id="zOut" aria-label="Zoom out">&minus;</button>
       <button id="zFit" aria-label="Fit page to screen">Fit</button>
@@ -238,6 +238,39 @@ a{text-decoration:none;color:inherit}
       hint.remove();
       insert(img);
     }, { once: true });
+  });
+
+  // Tap a signature to change its size or remove it
+  const bar = document.createElement('div');
+  bar.style.cssText = 'display:none;position:fixed;left:50%;transform:translateX(-50%);bottom:50px;z-index:25;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px;gap:6px;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.35)';
+  bar.innerHTML = '<button class="btn" data-a="small">&minus; Smaller</button>' +
+    '<button class="btn" data-a="big">+ Bigger</button>' +
+    '<button class="btn del" data-a="remove">Remove</button>' +
+    '<button class="btn fill" data-a="done">Done</button>';
+  document.body.appendChild(bar);
+  let chosen = null;
+
+  editor.addEventListener('click', (e) => {
+    chosen = !locked && e.target.matches('img[alt="Signature"]') ? e.target : null;
+    bar.style.display = chosen ? 'flex' : 'none';
+  });
+
+  bar.addEventListener('click', (e) => {
+    const button = e.target.closest('button');
+    if (!button || !chosen) return;
+    const action = button.dataset.a;
+    if (action === 'small' || action === 'big') {
+      const w = Math.min(450, Math.max(60, (parseInt(chosen.style.width, 10) || 150) + (action === 'big' ? 30 : -30)));
+      const h = Math.round(w / 3);
+      chosen.width = w;
+      chosen.height = h;
+      chosen.style.width = w + 'px';
+      chosen.style.height = h + 'px';
+      return markDirty();
+    }
+    if (action === 'remove') { chosen.remove(); markDirty(); }
+    chosen = null;
+    bar.style.display = 'none';
   });
 
   function insert(img) {
