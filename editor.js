@@ -86,6 +86,48 @@ async function showPdf() {
   document.getElementById('loading').style.display = 'none';
 }
 
+// ---------- HTML and Excel documents (open or download, nothing is saved) ----------
+async function showFile(ext) {
+  const { data: blob, error } = await sb.storage.from('documents').download(docRow.file_path);
+  if (error) throw error;
+
+  locked = true; // nothing to save for these files
+  ['saveBtn', 'submitBtn', 'resetBtn', 'wordBtn', 'tools'].forEach((id) => {
+    document.getElementById(id).style.display = 'none';
+  });
+
+  const isHtml = ext === 'html' || ext === 'htm';
+  const save = document.createElement('a');
+  save.className = 'btn fill';
+  save.href = URL.createObjectURL(new Blob([blob], { type: 'application/octet-stream' }));
+  save.download = (docRow.title.replace(/[^a-zA-Z0-9 _-]/g, '') || 'document') + '.' + ext;
+  save.textContent = isHtml ? 'Download this page' : 'Download Excel file';
+  save.style.marginBottom = '10px';
+
+  const note = document.createElement('p');
+  note.textContent = isHtml
+    ? 'Anything you type here is not saved or submitted.'
+    : 'Download the file and open it in Excel or another spreadsheet app. It is not saved or submitted here.';
+  note.style.marginBottom = '10px';
+
+  editor.contentEditable = 'false';
+  editor.replaceChildren(save, note);
+
+  if (isHtml) {
+    const frame = document.createElement('iframe');
+    // Scripts may run, but WITHOUT allow-same-origin they cannot reach the learner's login.
+    // Never add allow-same-origin here.
+    frame.setAttribute('sandbox', 'allow-scripts allow-forms allow-modals allow-downloads');
+    frame.title = docRow.title;
+    frame.style.cssText = 'width:100%;height:80vh;border:0;background:#fff';
+    frame.srcdoc = await blob.text();
+    editor.appendChild(frame);
+  }
+
+  editor.style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+}
+
 // ---------- Cover page background ----------
 // Temporary check message so we can see what happened to the cover
 function coverNote(text) {
@@ -149,6 +191,16 @@ async function init() {
   if (/\.pdf$/i.test(d.file_path)) {
     try {
       await showPdf();
+    } catch (err) {
+      document.getElementById('loading').textContent = 'Could not open the document: ' + err.message;
+    }
+    return;
+  }
+
+  const ext = d.file_path.split('.').pop().toLowerCase();
+  if (['html', 'htm', 'xlsx', 'xls'].includes(ext)) {
+    try {
+      await showFile(ext);
     } catch (err) {
       document.getElementById('loading').textContent = 'Could not open the document: ' + err.message;
     }
